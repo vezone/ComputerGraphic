@@ -233,8 +233,10 @@ void window_drop_callback(GLFWwindow* window, int32 count, const char** paths)
 
 int main()
 {
-	float g_R, g_G, g_B, g_K;
-	g_K = 0.01f;
+	float g_R, g_G, g_B, g_RI, g_GI, g_BI;
+	g_RI = 0.01f;
+	g_GI = 0.01f;
+	g_BI = 0.01f;
 	g_R = 0.01f;
 	g_G = 0.01f;
 	g_B = 0.01f;
@@ -321,16 +323,23 @@ int main()
 	vertex_buffer_unbind();
 
 	shader_source shaderSource = shader_loader_load(
-		"resources/SimpleVertexShader.txt",
-		"resources/SimpleFragmentShader.txt");
+		"resources/RotationVertexShader.txt",
+		"resources/RotationFragmentShader.txt");
 	uint32 shader = 
 		shader_loader_compile_shader(shaderSource);
 	int32 uniform_color_location = glGetUniformLocation(shader, "color");
 	glUseProgram(shader);
 	
 	//GLM
-	//mat4 view_m = { 1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0 };
+	mat4 rotationMatrix = {
+		1, 0, 0, 0,
+		0, 1, 0, 0,
+		0, 0, 1, 0,
+		0, 0, 0, 1
+	};
+	vec3 v3 = { 0.1f, 0.1f, 0.1f };
 	
+
 	double mouse_x_pos, mouse_y_pos;
 	while (!glfwWindowShouldClose(window))
 	{
@@ -338,6 +347,14 @@ int main()
 
 		
 		glUniform4f(uniform_color_location, g_R, g_G, g_B, 1);
+		glm_rotate(&rotationMatrix, 0.1f, &v3);
+		uint32_t location = 
+			glGetUniformLocation(shader, "RotationMatrix");
+		if (location >= 0)
+		{
+			glUniformMatrix4fv(location, 
+				1, 0, &rotationMatrix[0][0]);
+		}
 		//glUseProgram(shader);
 
 		//bug here: bind, unbind, select vertex_array
@@ -359,13 +376,24 @@ int main()
 		
 
 		if (g_R <= 0)
-			g_K = 0.01f;
+			g_RI = 0.02f;
 		else if (g_R >= 1)
-			g_K = -0.01f;
+			g_RI = -0.01f;
 		
-		g_R += g_K;
-		g_G += (g_K / 20);
-		g_B += (g_K / 5);
+		if (g_G <= 0)
+			g_GI = 0.01f;
+		else if (g_G >= 1)
+			g_GI = -0.02f;
+		
+		if (g_B <= 0)
+			g_BI = 0.03f;
+		else if (g_B >= 1)
+			g_BI = -0.01f;
+
+
+		g_R += g_RI;
+		g_G += g_GI;
+		g_B += g_BI;
 
 		
 		g_freqency = glfwGetTimerFrequency();
